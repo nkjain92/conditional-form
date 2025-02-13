@@ -16,11 +16,11 @@ interface Theme {
 
 // Default themes for optimistic UI
 const defaultThemes: Theme[] = [
-  { id: '1', name: 'Italian', maxVotes: 100, _count: { votes: 0 } },
-  { id: '2', name: 'Mexican', maxVotes: 100, _count: { votes: 0 } },
-  { id: '3', name: 'Chinese', maxVotes: 100, _count: { votes: 0 } },
-  { id: '4', name: 'Indian', maxVotes: 100, _count: { votes: 0 } },
-  { id: '5', name: 'Mediterranean', maxVotes: 100, _count: { votes: 0 } },
+  { id: 'default-italian', name: 'Italian', maxVotes: 100, _count: { votes: 0 } },
+  { id: 'default-mexican', name: 'Mexican', maxVotes: 100, _count: { votes: 0 } },
+  { id: 'default-chinese', name: 'Chinese', maxVotes: 100, _count: { votes: 0 } },
+  { id: 'default-indian', name: 'Indian', maxVotes: 100, _count: { votes: 0 } },
+  { id: 'default-mediterranean', name: 'Mediterranean', maxVotes: 100, _count: { votes: 0 } },
 ];
 
 export default function Home() {
@@ -51,14 +51,20 @@ export default function Home() {
       const response = await fetch('/api/themes');
       const data = await response.json();
 
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to fetch themes');
+      }
+
       if (Array.isArray(data)) {
         setThemes(data);
+      } else if (data.error) {
+        setError(data.error);
       } else {
         setError('Invalid data format received');
       }
     } catch (error) {
       console.error('Error fetching themes:', error);
-      setError('Failed to fetch themes');
+      setError(error instanceof Error ? error.message : 'Failed to fetch themes');
     }
   };
 
@@ -73,9 +79,7 @@ export default function Home() {
     }
 
     try {
-      // Optimistically update UI
       setSuccess('Submitting your vote...');
-      setHasVoted(true);
 
       const response = await fetch('/api/votes', {
         method: 'POST',
@@ -84,26 +88,25 @@ export default function Home() {
         },
         body: JSON.stringify({
           themeId: selectedTheme,
-          voterName,
+          voterName: voterName.trim(),
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error);
+        throw new Error(data.error || 'Failed to submit vote');
       }
 
       setSuccess('Vote submitted successfully!');
       setVoterName('');
       setSelectedTheme('');
-      fetchThemes();
+      setHasVoted(true);
+      await fetchThemes(); // Refresh themes after successful vote
     } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-        setHasVoted(false); // Revert optimistic update
-      } else {
-        setError('Failed to submit vote');
-      }
+      console.error('Vote error:', error);
+      setError(error instanceof Error ? error.message : 'Failed to submit vote');
+      setHasVoted(false);
     }
   };
 
