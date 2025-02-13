@@ -18,6 +18,7 @@ export default function Home() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
     fetchThemes();
@@ -76,6 +77,7 @@ export default function Home() {
       setSuccess('Vote submitted successfully!');
       setVoterName('');
       setSelectedTheme('');
+      setHasVoted(true);
       fetchThemes();
     } catch (error) {
       if (error instanceof Error) {
@@ -103,31 +105,7 @@ export default function Home() {
       <div className='max-w-2xl mx-auto'>
         <h1 className='text-3xl font-bold mb-8 text-center'>Catering Theme Voting</h1>
 
-        <div className='mb-8'>
-          <h2 className='text-xl font-semibold mb-4'>Current Standings</h2>
-          <div className='grid gap-4'>
-            {themes.map(theme => (
-              <div key={theme.id} className='p-4 border rounded-lg bg-white shadow-sm'>
-                <div className='flex justify-between items-center'>
-                  <h3 className='font-medium'>{theme.name}</h3>
-                  <div className='text-sm text-gray-600'>
-                    {theme._count.votes} / {theme.maxVotes} votes
-                  </div>
-                </div>
-                <div className='mt-2 bg-gray-200 rounded-full h-2'>
-                  <div
-                    className='bg-blue-600 rounded-full h-2 transition-all duration-300'
-                    style={{
-                      width: `${(theme._count.votes / theme.maxVotes) * 100}%`,
-                    }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <form onSubmit={handleVote} className='space-y-6 bg-white p-6 rounded-lg shadow'>
+        <form onSubmit={handleVote} className='space-y-6 bg-white p-6 rounded-lg shadow mb-8'>
           <div>
             <label htmlFor='voterName' className='block text-sm font-medium text-gray-700 mb-1'>
               Your Name
@@ -185,6 +163,32 @@ export default function Home() {
             Submit Vote
           </button>
         </form>
+
+        {hasVoted && (
+          <div className='mt-8'>
+            <h2 className='text-xl font-semibold mb-4'>Current Standings</h2>
+            <div className='grid gap-4'>
+              {themes.map(theme => (
+                <div key={theme.id} className='p-4 border rounded-lg bg-white shadow-sm'>
+                  <div className='flex justify-between items-center'>
+                    <h3 className='font-medium'>{theme.name}</h3>
+                    <div className='text-sm text-gray-600'>
+                      {theme._count.votes} / {theme.maxVotes} votes
+                    </div>
+                  </div>
+                  <div className='mt-2 bg-gray-200 rounded-full h-2'>
+                    <div
+                      className='bg-blue-600 rounded-full h-2 transition-all duration-300'
+                      style={{
+                        width: `${(theme._count.votes / theme.maxVotes) * 100}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </main>
   );
