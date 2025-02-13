@@ -68,7 +68,7 @@ export async function GET() {
         { name: 'Chinese', maxVotes: 100, formId: defaultForm.id },
         { name: 'Indian', maxVotes: 100, formId: defaultForm.id },
         { name: 'Mediterranean', maxVotes: 100, formId: defaultForm.id },
-      ];
+      ].sort((a, b) => a.name.localeCompare(b.name));
 
       const createdThemes = await Promise.all(
         seedThemes.map(async theme => {

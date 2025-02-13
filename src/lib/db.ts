@@ -8,6 +8,12 @@ const prismaClientSingleton = () => {
         url: process.env.POSTGRES_URL || process.env.DATABASE_URL,
       },
     },
+    connection: {
+      pool: {
+        min: 1,
+        max: 5,
+      },
+    },
   });
 
   // Test the connection

@@ -4,32 +4,28 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
 
-interface FormTheme {
-  name: string;
-  maxVotes: number;
-}
-
 export default function Dashboard() {
   const { user } = useAuth();
   const router = useRouter();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [themes, setThemes] = useState<FormTheme[]>([{ name: '', maxVotes: 100 }]);
+  const [options, setOptions] = useState([{ name: '', maxVotes: '' }]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [formId, setFormId] = useState('');
 
-  const addTheme = () => {
-    setThemes([...themes, { name: '', maxVotes: 100 }]);
+  const addOption = () => {
+    setOptions([...options, { name: '', maxVotes: '' }]);
   };
 
-  const removeTheme = (index: number) => {
-    setThemes(themes.filter((_, i) => i !== index));
+  const removeOption = (index: number) => {
+    setOptions(options.filter((_, i) => i !== index));
   };
 
-  const updateTheme = (index: number, field: keyof FormTheme, value: string | number) => {
-    const newThemes = [...themes];
-    newThemes[index] = { ...newThemes[index], [field]: value };
-    setThemes(newThemes);
+  const updateOption = (index: number, field: keyof (typeof options)[0], value: string) => {
+    const newOptions = [...options];
+    newOptions[index] = { ...newOptions[index], [field]: value };
+    setOptions(newOptions);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -42,8 +38,8 @@ export default function Dashboard() {
       return;
     }
 
-    if (themes.some(theme => !theme.name)) {
-      setError('Please fill in all theme names');
+    if (options.some(option => !option.name)) {
+      setError('Please fill in all option names');
       return;
     }
 
@@ -54,19 +50,24 @@ export default function Dashboard() {
         body: JSON.stringify({
           title,
           description,
-          themes,
+          themes: options.map(opt => ({
+            name: opt.name,
+            maxVotes: parseInt(opt.maxVotes) || 3, // Default to 3 if not specified
+          })),
         }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const data = await response.json();
         throw new Error(data.message);
       }
 
-      setSuccess('Form created successfully!');
+      setFormId(data.id);
+      setSuccess('Form created successfully! Share this link with others:');
       setTitle('');
       setDescription('');
-      setThemes([{ name: '', maxVotes: 100 }]);
+      setOptions([{ name: '', maxVotes: '' }]);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create form');
     }
@@ -80,15 +81,13 @@ export default function Dashboard() {
   return (
     <main className='min-h-screen p-8 bg-[#0A0A0A] text-white'>
       <div className='max-w-4xl mx-auto'>
-        <h1 className='text-5xl font-bold mb-2 text-center bg-gradient-to-r from-white to-white/60 text-transparent bg-clip-text'>
+        <h1 className='text-3xl font-bold mb-2 text-center bg-gradient-to-r from-white to-white/60 text-transparent bg-clip-text'>
           Create New Form
         </h1>
-        <p className='text-lg text-center mb-12 text-white/60'>
-          Design your custom voting form with multiple themes
-        </p>
+        <p className='text-lg text-center mb-8 text-white/60'>Design your custom voting form</p>
 
-        <form onSubmit={handleSubmit} className='space-y-8'>
-          <div className='space-y-6 bg-white/5 backdrop-blur-lg p-8 rounded-2xl border border-white/10'>
+        <form onSubmit={handleSubmit} className='space-y-6'>
+          <div className='space-y-4 bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-white/10'>
             <div>
               <label htmlFor='title' className='block text-sm font-medium text-white/80 mb-1'>
                 Form Title
@@ -98,7 +97,7 @@ export default function Dashboard() {
                 id='title'
                 value={title}
                 onChange={e => setTitle(e.target.value)}
-                className='block w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
+                className='block w-full rounded-xl border border-white/10 px-4 py-2.5 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
                 placeholder='Enter form title'
                 required
               />
@@ -112,61 +111,56 @@ export default function Dashboard() {
                 id='description'
                 value={description}
                 onChange={e => setDescription(e.target.value)}
-                className='block w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
+                className='block w-full rounded-xl border border-white/10 px-4 py-2.5 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
                 placeholder='Enter form description'
                 rows={3}
               />
             </div>
           </div>
 
-          <div className='space-y-6 bg-white/5 backdrop-blur-lg p-8 rounded-2xl border border-white/10'>
+          <div className='space-y-4 bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-white/10'>
             <div className='flex justify-between items-center'>
-              <h2 className='text-xl font-semibold'>Themes</h2>
+              <h2 className='text-xl font-semibold'>Options</h2>
               <button
                 type='button'
-                onClick={addTheme}
+                onClick={addOption}
                 className='text-blue-400 hover:text-blue-300 transition-colors'>
-                + Add Theme
+                + Add Option
               </button>
             </div>
 
-            <div className='space-y-4'>
-              {themes.map((theme, index) => (
-                <div key={index} className='flex gap-4'>
+            <div className='space-y-3'>
+              {options.map((option, index) => (
+                <div key={index} className='flex gap-3'>
                   <div className='flex-1'>
                     <input
                       type='text'
-                      value={theme.name}
-                      onChange={e => updateTheme(index, 'name', e.target.value)}
-                      className='block w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
-                      placeholder='Theme name'
+                      value={option.name}
+                      onChange={e => updateOption(index, 'name', e.target.value)}
+                      className='block w-full rounded-xl border border-white/10 px-4 py-2.5 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
+                      placeholder='Option name'
                       required
                     />
                   </div>
                   <div className='w-32'>
-                    <label className='sr-only' htmlFor={`maxVotes-${index}`}>
-                      Maximum votes for {theme.name || 'theme'}
-                    </label>
                     <input
                       type='number'
-                      id={`maxVotes-${index}`}
-                      value={theme.maxVotes}
-                      onChange={e => updateTheme(index, 'maxVotes', parseInt(e.target.value))}
-                      className='block w-full rounded-xl border border-white/10 px-4 py-3 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
+                      value={option.maxVotes}
+                      onChange={e => updateOption(index, 'maxVotes', e.target.value)}
+                      className='block w-full rounded-xl border border-white/10 px-4 py-2.5 bg-white/5 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all'
                       min='1'
-                      placeholder='Max votes'
-                      required
+                      placeholder='Max votes (3)'
                     />
                   </div>
-                  {themes.length > 1 && (
+                  {options.length > 1 && (
                     <button
                       type='button'
-                      onClick={() => removeTheme(index)}
-                      className='text-red-400 hover:text-red-300 transition-colors'
-                      aria-label='Remove theme'>
+                      onClick={() => removeOption(index)}
+                      className='text-red-400 hover:text-red-300 transition-colors p-2'
+                      aria-label='Remove option'>
                       <svg
                         xmlns='http://www.w3.org/2000/svg'
-                        className='h-6 w-6'
+                        className='h-5 w-5'
                         fill='none'
                         viewBox='0 0 24 24'
                         stroke='currentColor'>
@@ -191,7 +185,14 @@ export default function Dashboard() {
           )}
           {success && (
             <div className='text-green-400 text-sm bg-green-500/10 border border-green-500/20 p-4 rounded-xl'>
-              {success}
+              <p>{success}</p>
+              {formId && (
+                <div className='mt-2'>
+                  <code className='bg-white/10 px-2 py-1 rounded'>
+                    {window.location.origin}/form/{formId}
+                  </code>
+                </div>
+              )}
             </div>
           )}
 

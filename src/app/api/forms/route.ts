@@ -1,28 +1,36 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { getUserId, validateThemeData, sanitizeThemeName } from '@/lib/utils';
-import { FormData } from '@/lib/types';
+import { getUserId } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
     const userId = await getUserId();
-
     if (!userId) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { title, description, themes } = body as FormData;
+    const { title, description, themes } = body;
 
     // Validate input
     if (!title || !themes || !Array.isArray(themes) || themes.length === 0) {
-      return NextResponse.json({ message: 'Invalid form data' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Please provide a title and at least one option' },
+        { status: 400 },
+      );
     }
 
-    // Validate themes data
-    const invalidThemes = themes.map(validateThemeData).filter(result => !result.isValid);
-    if (invalidThemes.length > 0) {
-      return NextResponse.json({ message: invalidThemes[0].error }, { status: 400 });
+    // Validate each theme
+    for (const theme of themes) {
+      if (!theme.name || typeof theme.name !== 'string' || !theme.name.trim()) {
+        return NextResponse.json({ message: 'Each option must have a name' }, { status: 400 });
+      }
+      if (theme.maxVotes && (isNaN(theme.maxVotes) || theme.maxVotes < 1)) {
+        return NextResponse.json(
+          { message: 'Maximum votes must be a positive number' },
+          { status: 400 },
+        );
+      }
     }
 
     // Create form with themes
@@ -33,26 +41,23 @@ export async function POST(request: Request) {
         creatorId: userId,
         themes: {
           create: themes.map(theme => ({
-            name: sanitizeThemeName(theme.name),
-            maxVotes: theme.maxVotes,
+            name: theme.name.trim(),
+            maxVotes: theme.maxVotes || 3, // Default to 3 if not specified
           })),
         },
       },
       include: {
-        themes: {
-          include: {
-            _count: {
-              select: { votes: true },
-            },
-          },
-        },
+        themes: true,
       },
     });
 
     return NextResponse.json(form);
   } catch (error) {
     console.error('Create form error:', error);
-    return NextResponse.json({ message: 'Failed to create form' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Failed to create form. Please try again.' },
+      { status: 500 },
+    );
   }
 }
 

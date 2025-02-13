@@ -199,7 +199,7 @@ export default function Home() {
             <div className='animate-fade-in'>
               <h2 className='text-xl font-semibold mb-4 text-white/90'>Current Standings</h2>
               <div className='space-y-3'>
-                {themes.map(theme => (
+                {themes.map((theme, index) => (
                   <div
                     key={theme.id}
                     className='bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4'>
@@ -209,11 +209,13 @@ export default function Home() {
                         {theme._count.votes} / {theme.maxVotes}
                       </div>
                     </div>
-                    <div className='relative h-2 bg-white/5 rounded-full overflow-hidden'>
+                    <div className='relative h-6 bg-[#1A1A1A] rounded-md overflow-hidden'>
                       <div
-                        className='absolute top-0 left-0 h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000'
+                        className='absolute top-0 left-0 h-full bg-[#3B82F6] transition-all duration-1000'
                         style={{
                           width: `${(theme._count.votes / theme.maxVotes) * 100}%`,
+                          background: 'linear-gradient(180deg, #60A5FA 0%, #3B82F6 100%)',
+                          boxShadow: '0 0 10px rgba(59, 130, 246, 0.5)',
                         }}
                       />
                     </div>
