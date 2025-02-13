@@ -49,7 +49,6 @@ export default function Home() {
 
   const fetchThemes = async () => {
     try {
-      setIsLoading(true);
       const response = await fetch('/api/themes');
       const data = await response.json();
 
@@ -61,8 +60,6 @@ export default function Home() {
     } catch (error) {
       console.error('Error fetching themes:', error);
       setError('Failed to fetch themes');
-    } finally {
-      setIsLoading(false);
     }
   };
 

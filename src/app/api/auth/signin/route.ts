@@ -33,8 +33,16 @@ export async function POST(request: Request) {
     // Generate JWT
     const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
 
-    // Set cookie
-    cookies().set('auth-token', token, {
+    // Create response
+    const response = NextResponse.json({
+      user: {
+        id: user.id,
+        email: user.email,
+      },
+    });
+
+    // Set cookie in response
+    response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
@@ -42,13 +50,7 @@ export async function POST(request: Request) {
       path: '/',
     });
 
-    // Return user data (excluding password)
-    return NextResponse.json({
-      user: {
-        id: user.id,
-        email: user.email,
-      },
-    });
+    return response;
   } catch (error) {
     console.error('Signin error:', error);
     return NextResponse.json({ message: 'Failed to sign in' }, { status: 500 });

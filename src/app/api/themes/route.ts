@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { revalidatePath } from 'next/cache';
 
 // Cache for themes data
-let themesCache: any = null;
+let themesCache: Array<any> = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 5000; // 5 seconds cache
 

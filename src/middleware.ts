@@ -7,6 +7,10 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 // Add paths that don't require authentication
 const publicPaths = ['/', '/api/auth/signin', '/api/auth/signup', '/api/auth/signout'];
 
+interface JwtPayload {
+  userId: string;
+}
+
 export async function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
@@ -24,15 +28,15 @@ export async function middleware(request: NextRequest) {
 
   try {
     // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET);
+    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('user-id', (decoded as any).userId);
+    requestHeaders.set('user-id', decoded.userId);
 
     // Add user info to request
     return NextResponse.next({
       headers: requestHeaders,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Invalid authentication token' }, { status: 401 });
   }
 }
