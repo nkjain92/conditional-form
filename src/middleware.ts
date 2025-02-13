@@ -2,7 +2,13 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 // Add paths that don't require authentication
-const publicPaths = ['/', '/api/auth/signin', '/api/auth/signup', '/api/auth/signout'];
+const publicPaths = [
+  '/',
+  '/api/auth/signin',
+  '/api/auth/signup',
+  '/api/auth/signout',
+  '/api/themes',
+];
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -53,5 +59,5 @@ export function middleware(request: NextRequest) {
 
 // Configure paths that should be protected
 export const config = {
-  matcher: ['/api/forms/:path*', '/api/themes/:path*', '/api/votes/:path*', '/dashboard/:path*'],
+  matcher: ['/api/forms/:path*', '/api/votes/:path*', '/dashboard/:path*'],
 };
