@@ -1,8 +1,25 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+
+interface Theme {
+  id: string;
+  name: string;
+  maxVotes: number;
+  _count: {
+    votes: number;
+  };
+}
+
+interface Form {
+  id: string;
+  title: string;
+  description?: string;
+  themes: Theme[];
+  createdAt: string;
+}
 
 export default function Dashboard() {
   const { user } = useAuth();
@@ -13,6 +30,31 @@ export default function Dashboard() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [formId, setFormId] = useState('');
+  const [forms, setForms] = useState<Form[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user) {
+      fetchForms();
+    }
+  }, [user]);
+
+  const fetchForms = async () => {
+    try {
+      const response = await fetch('/api/forms');
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to fetch forms');
+      }
+
+      setForms(data);
+    } catch (error) {
+      console.error('Error fetching forms:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addOption = () => {
     setOptions([...options, { name: '', maxVotes: '' }]);
@@ -68,6 +110,7 @@ export default function Dashboard() {
       setTitle('');
       setDescription('');
       setOptions([{ name: '', maxVotes: '' }]);
+      fetchForms(); // Refresh the forms list
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Failed to create form');
     }
@@ -202,6 +245,60 @@ export default function Dashboard() {
             Create Form
           </button>
         </form>
+
+        {/* Previously Created Forms */}
+        <div className='mt-12'>
+          <h2 className='text-2xl font-bold mb-6 text-white/90'>Your Forms</h2>
+          {loading ? (
+            <div className='text-white/60'>Loading your forms...</div>
+          ) : forms.length === 0 ? (
+            <div className='text-white/60'>You haven't created any forms yet.</div>
+          ) : (
+            <div className='space-y-4'>
+              {forms.map(form => (
+                <div
+                  key={form.id}
+                  className='bg-white/5 backdrop-blur-lg p-6 rounded-2xl border border-white/10'>
+                  <div className='flex justify-between items-start mb-4'>
+                    <div>
+                      <h3 className='text-xl font-semibold mb-1'>{form.title}</h3>
+                      {form.description && (
+                        <p className='text-white/60 text-sm'>{form.description}</p>
+                      )}
+                    </div>
+                    <div className='text-sm text-white/40'>
+                      {new Date(form.createdAt).toLocaleDateString()}
+                    </div>
+                  </div>
+                  <div className='flex flex-wrap gap-2 mb-4'>
+                    {form.themes.map(theme => (
+                      <div
+                        key={theme.id}
+                        className='bg-white/10 px-3 py-1 rounded-lg text-sm flex items-center gap-2'>
+                        <span>{theme.name}</span>
+                        <span className='text-white/40'>
+                          {theme._count.votes}/{theme.maxVotes}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className='flex items-center gap-4'>
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/form/${form.id}`;
+                        navigator.clipboard.writeText(url);
+                        setSuccess('Form link copied to clipboard!');
+                        setTimeout(() => setSuccess(''), 3000);
+                      }}
+                      className='text-blue-400 hover:text-blue-300 transition-colors text-sm'>
+                      Copy Share Link
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     </main>
   );
