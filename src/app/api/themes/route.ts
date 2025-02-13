@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import bcrypt from 'bcryptjs';
+import { isValidThemeData, sanitizeThemeName } from '@/lib/utils';
 
 interface CachedTheme {
   id: string;
@@ -29,6 +31,14 @@ export async function GET() {
           select: { votes: true },
         },
       },
+      where: {
+        form: {
+          id: 'default',
+        },
+      },
+      orderBy: {
+        name: 'asc',
+      },
     });
 
     if (!themes || themes.length === 0) {
@@ -39,7 +49,7 @@ export async function GET() {
         create: {
           id: 'system',
           email: 'system@example.com',
-          password: 'system-password-not-used',
+          password: await bcrypt.hash('system-password-not-used', 10),
         },
       });
 
@@ -65,10 +75,13 @@ export async function GET() {
       ];
 
       const createdThemes = await Promise.all(
-        seedThemes.map(theme =>
-          prisma.theme.create({
+        seedThemes.map(async theme => {
+          const sanitizedName = sanitizeThemeName(theme.name);
+          return prisma.theme.create({
             data: {
-              ...theme,
+              id: `default-${sanitizedName}`,
+              name: theme.name,
+              maxVotes: theme.maxVotes,
               formId: defaultForm.id,
             },
             include: {
@@ -76,8 +89,8 @@ export async function GET() {
                 select: { votes: true },
               },
             },
-          }),
-        ),
+          });
+        }),
       );
 
       // Update cache
@@ -104,17 +117,40 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, maxVotes, formId } = await request.json();
+    const body = await request.json();
 
-    if (!formId) {
-      return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
+    // Validate theme data
+    if (!isValidThemeData(body)) {
+      return NextResponse.json(
+        { error: 'Invalid theme data. Name and maxVotes are required.' },
+        { status: 400 },
+      );
     }
 
+    const { name, maxVotes, formId } = body;
+
+    // Check if form exists
+    const form = await prisma.form.findUnique({
+      where: { id: formId },
+    });
+
+    if (!form) {
+      return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+    }
+
+    // Create theme with sanitized name
+    const sanitizedName = sanitizeThemeName(name);
     const theme = await prisma.theme.create({
       data: {
+        id: `theme-${sanitizedName}-${Date.now()}`,
         name,
         maxVotes,
         formId,
+      },
+      include: {
+        _count: {
+          select: { votes: true },
+        },
       },
     });
 

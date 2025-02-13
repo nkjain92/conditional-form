@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
+import { getUserId, isValidFormId, isValidThemeData, sanitizeThemeName } from '@/lib/utils';
 
 export async function POST(request: Request) {
   try {
-    const userId = request.headers.get('user-id');
+    const userId = await getUserId();
 
     if (!userId) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
@@ -16,6 +17,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid form data' }, { status: 400 });
     }
 
+    // Validate themes data
+    if (!themes.every(isValidThemeData)) {
+      return NextResponse.json({ message: 'Invalid theme data' }, { status: 400 });
+    }
+
     // Create form with themes
     const form = await prisma.form.create({
       data: {
@@ -24,13 +30,19 @@ export async function POST(request: Request) {
         creatorId: userId,
         themes: {
           create: themes.map(theme => ({
-            name: theme.name,
+            name: sanitizeThemeName(theme.name),
             maxVotes: theme.maxVotes,
           })),
         },
       },
       include: {
-        themes: true,
+        themes: {
+          include: {
+            _count: {
+              select: { votes: true },
+            },
+          },
+        },
       },
     });
 
@@ -43,7 +55,7 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    const userId = request.headers.get('user-id');
+    const userId = await getUserId();
 
     if (!userId) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
