@@ -32,7 +32,30 @@ export async function GET() {
     });
 
     if (!themes || themes.length === 0) {
-      // If no themes exist, create them
+      // Get or create system user
+      const systemUser = await prisma.user.upsert({
+        where: { email: 'system@example.com' },
+        update: {},
+        create: {
+          id: 'system',
+          email: 'system@example.com',
+          password: 'system-password-not-used',
+        },
+      });
+
+      // Get or create default form
+      const defaultForm = await prisma.form.upsert({
+        where: { id: 'default' },
+        update: {},
+        create: {
+          id: 'default',
+          title: 'Default Voting Form',
+          description: 'Default form for theme voting',
+          creatorId: systemUser.id,
+        },
+      });
+
+      // If no themes exist, create them with form relationship
       const seedThemes = [
         { name: 'Italian', maxVotes: 100 },
         { name: 'Mexican', maxVotes: 100 },
@@ -44,7 +67,10 @@ export async function GET() {
       const createdThemes = await Promise.all(
         seedThemes.map(theme =>
           prisma.theme.create({
-            data: theme,
+            data: {
+              ...theme,
+              formId: defaultForm.id,
+            },
             include: {
               _count: {
                 select: { votes: true },
@@ -78,12 +104,17 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { name, maxVotes } = await request.json();
+    const { name, maxVotes, formId } = await request.json();
+
+    if (!formId) {
+      return NextResponse.json({ error: 'Form ID is required' }, { status: 400 });
+    }
 
     const theme = await prisma.theme.create({
       data: {
         name,
         maxVotes,
+        formId,
       },
     });
 
