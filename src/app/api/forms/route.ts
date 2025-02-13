@@ -1,11 +1,9 @@
 import { NextResponse } from 'next/server';
-import { headers } from 'next/headers';
 import prisma from '@/lib/db';
 
 export async function POST(request: Request) {
   try {
-    const headersList = headers();
-    const userId = headersList.get('user-id');
+    const userId = request.headers.get('user-id');
 
     if (!userId) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
@@ -43,10 +41,9 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const headersList = headers();
-    const userId = headersList.get('user-id');
+    const userId = request.headers.get('user-id');
 
     if (!userId) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });

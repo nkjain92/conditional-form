@@ -11,7 +11,7 @@ interface JwtPayload {
   userId: string;
 }
 
-export async function middleware(request: NextRequest) {
+export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   // Allow public paths
@@ -33,9 +33,13 @@ export async function middleware(request: NextRequest) {
     requestHeaders.set('user-id', decoded.userId);
 
     // Add user info to request
-    return NextResponse.next({
-      headers: requestHeaders,
+    const response = NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
     });
+
+    return response;
   } catch {
     return NextResponse.json({ message: 'Invalid authentication token' }, { status: 401 });
   }
