@@ -26,14 +26,20 @@ export default function Home() {
   const fetchThemes = async () => {
     try {
       setIsLoading(true);
+      console.log('Fetching themes...');
       const response = await fetch('/api/themes');
       const data = await response.json();
+      console.log('Received data:', data);
+
       if (Array.isArray(data)) {
+        console.log('Setting themes:', data);
         setThemes(data);
       } else {
+        console.log('Invalid data format:', data);
         setError('Invalid data format received');
       }
-    } catch {
+    } catch (error) {
+      console.error('Error fetching themes:', error);
       setError('Failed to fetch themes');
     } finally {
       setIsLoading(false);
