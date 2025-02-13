@@ -29,7 +29,6 @@ export async function GET() {
           select: { votes: true },
         },
       },
-      cacheStrategy: { ttl: 5 },
     });
 
     if (!themes || themes.length === 0) {
