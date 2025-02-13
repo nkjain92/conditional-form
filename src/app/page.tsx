@@ -199,7 +199,7 @@ export default function Home() {
             <div className='animate-fade-in'>
               <h2 className='text-xl font-semibold mb-4 text-white/90'>Current Standings</h2>
               <div className='space-y-3'>
-                {themes.map((theme, index) => (
+                {themes.map(theme => (
                   <div
                     key={theme.id}
                     className='bg-white/5 backdrop-blur-lg border border-white/10 rounded-xl p-4'>
