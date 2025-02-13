@@ -32,7 +32,6 @@ export default function Home() {
   const [selectedTheme, setSelectedTheme] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
 
   const handleCreateForm = () => {

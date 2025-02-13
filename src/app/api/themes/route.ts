@@ -1,8 +1,17 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 
+interface CachedTheme {
+  id: string;
+  name: string;
+  maxVotes: number;
+  _count: {
+    votes: number;
+  };
+}
+
 // Cache for themes data
-let themesCache: Array<any> = null;
+let themesCache: CachedTheme[] | null = null;
 let lastFetchTime = 0;
 const CACHE_DURATION = 5000; // 5 seconds cache
 
