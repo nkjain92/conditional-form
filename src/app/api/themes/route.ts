@@ -59,11 +59,11 @@ export async function GET() {
 
       // If no themes exist, create them with form relationship
       const seedThemes: ThemeData[] = [
-        { name: 'Italian', maxVotes: 100 },
-        { name: 'Mexican', maxVotes: 100 },
-        { name: 'Chinese', maxVotes: 100 },
-        { name: 'Indian', maxVotes: 100 },
-        { name: 'Mediterranean', maxVotes: 100 },
+        { name: 'Italian', maxVotes: 100, formId: defaultForm.id },
+        { name: 'Mexican', maxVotes: 100, formId: defaultForm.id },
+        { name: 'Chinese', maxVotes: 100, formId: defaultForm.id },
+        { name: 'Indian', maxVotes: 100, formId: defaultForm.id },
+        { name: 'Mediterranean', maxVotes: 100, formId: defaultForm.id },
       ];
 
       const createdThemes = await Promise.all(
@@ -74,7 +74,7 @@ export async function GET() {
               id: generateId('default', sanitizedName),
               name: sanitizedName,
               maxVotes: theme.maxVotes,
-              formId: defaultForm.id,
+              formId: theme.formId,
             },
             include: {
               _count: {
@@ -117,7 +117,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { name, maxVotes, formId } = body as ThemeData;
+    const { name, maxVotes, formId } = body as Required<ThemeData>;
     const sanitizedName = sanitizeThemeName(name);
 
     // Check if form exists

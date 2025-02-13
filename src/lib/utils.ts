@@ -14,12 +14,14 @@ export function validateThemeData(data: unknown): ValidationResult {
     typeof (data as ThemeData).name !== 'string' ||
     !(data as ThemeData).name.length ||
     typeof (data as ThemeData).maxVotes !== 'number' ||
-    (data as ThemeData).maxVotes <= 0
+    (data as ThemeData).maxVotes <= 0 ||
+    typeof (data as ThemeData).formId !== 'string' ||
+    !(data as ThemeData).formId.length
   ) {
     return {
       isValid: false,
       error:
-        'Invalid theme data. Name must be a non-empty string and maxVotes must be a positive number.',
+        'Invalid theme data. Name must be a non-empty string, maxVotes must be a positive number, and formId must be provided.',
     };
   }
   return { isValid: true };

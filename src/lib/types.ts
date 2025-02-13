@@ -1,7 +1,7 @@
 export interface ThemeData {
   name: string;
   maxVotes: number;
-  formId?: string;
+  formId: string;
 }
 
 export interface VoteData {
