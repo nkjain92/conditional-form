@@ -1,16 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import { isValidThemeData, sanitizeThemeName } from '@/lib/utils';
-
-interface CachedTheme {
-  id: string;
-  name: string;
-  maxVotes: number;
-  _count: {
-    votes: number;
-  };
-}
+import { validateThemeData, sanitizeThemeName, generateId } from '@/lib/utils';
+import { CachedTheme, ThemeData } from '@/lib/types';
 
 // Cache for themes data
 let themesCache: CachedTheme[] | null = null;
@@ -66,7 +58,7 @@ export async function GET() {
       });
 
       // If no themes exist, create them with form relationship
-      const seedThemes = [
+      const seedThemes: ThemeData[] = [
         { name: 'Italian', maxVotes: 100 },
         { name: 'Mexican', maxVotes: 100 },
         { name: 'Chinese', maxVotes: 100 },
@@ -79,7 +71,7 @@ export async function GET() {
           const sanitizedName = sanitizeThemeName(theme.name);
           return prisma.theme.create({
             data: {
-              id: `default-${sanitizedName}`,
+              id: generateId('default', theme.name),
               name: theme.name,
               maxVotes: theme.maxVotes,
               formId: defaultForm.id,
@@ -120,14 +112,12 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validate theme data
-    if (!isValidThemeData(body)) {
-      return NextResponse.json(
-        { error: 'Invalid theme data. Name and maxVotes are required.' },
-        { status: 400 },
-      );
+    const validation = validateThemeData(body);
+    if (!validation.isValid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { name, maxVotes, formId } = body;
+    const { name, maxVotes, formId } = body as ThemeData;
 
     // Check if form exists
     const form = await prisma.form.findUnique({
@@ -139,10 +129,9 @@ export async function POST(request: Request) {
     }
 
     // Create theme with sanitized name
-    const sanitizedName = sanitizeThemeName(name);
     const theme = await prisma.theme.create({
       data: {
-        id: `theme-${sanitizedName}-${Date.now()}`,
+        id: generateId('theme', name),
         name,
         maxVotes,
         formId,

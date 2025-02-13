@@ -1,21 +1,23 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
-import { sanitizeThemeName } from '@/lib/utils';
+import { generateId } from '@/lib/utils';
+import { VoteData } from '@/lib/types';
 
-interface VoteData {
-  themeId: string;
-  voterName: string;
-}
-
-function isValidVoteData(data: any): data is VoteData {
-  return (
-    typeof data === 'object' &&
-    data !== null &&
-    typeof data.themeId === 'string' &&
-    data.themeId.length > 0 &&
-    typeof data.voterName === 'string' &&
-    data.voterName.trim().length > 0
-  );
+function validateVoteData(data: unknown): { isValid: boolean; error?: string } {
+  if (
+    typeof data !== 'object' ||
+    data === null ||
+    typeof (data as VoteData).themeId !== 'string' ||
+    !(data as VoteData).themeId.length ||
+    typeof (data as VoteData).voterName !== 'string' ||
+    !(data as VoteData).voterName.trim().length
+  ) {
+    return {
+      isValid: false,
+      error: 'Invalid vote data. Theme ID and voter name are required.',
+    };
+  }
+  return { isValid: true };
 }
 
 export async function POST(request: Request) {
@@ -23,14 +25,12 @@ export async function POST(request: Request) {
     const body = await request.json();
 
     // Validate vote data
-    if (!isValidVoteData(body)) {
-      return NextResponse.json(
-        { error: 'Invalid vote data. Theme ID and voter name are required.' },
-        { status: 400 },
-      );
+    const validation = validateVoteData(body);
+    if (!validation.isValid) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
     }
 
-    const { themeId, voterName } = body;
+    const { themeId, voterName } = body as VoteData;
     const sanitizedVoterName = voterName.trim();
 
     // Check if voter has already voted
@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     // Create vote with sanitized voter name
     const vote = await prisma.vote.create({
       data: {
-        id: `vote-${sanitizeThemeName(sanitizedVoterName)}-${Date.now()}`,
+        id: generateId('vote', sanitizedVoterName),
         themeId,
         voterName: sanitizedVoterName,
       },
