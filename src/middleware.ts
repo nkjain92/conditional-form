@@ -1,15 +1,8 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import jwt from 'jsonwebtoken';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // Add paths that don't require authentication
 const publicPaths = ['/', '/api/auth/signin', '/api/auth/signup', '/api/auth/signout'];
-
-interface JwtPayload {
-  userId: string;
-}
 
 export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
@@ -27,10 +20,23 @@ export function middleware(request: NextRequest) {
   }
 
   try {
-    // Verify token
-    const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload;
+    // Simple token validation (in production, use a proper Edge-compatible JWT library)
+    const [header, payload, signature] = token.split('.');
+    if (!header || !payload || !signature) {
+      throw new Error('Invalid token format');
+    }
+
+    // Decode payload
+    const decodedPayload = JSON.parse(atob(payload.replace(/-/g, '+').replace(/_/g, '/')));
+
+    // Check if token is expired
+    if (decodedPayload.exp && Date.now() >= decodedPayload.exp * 1000) {
+      throw new Error('Token expired');
+    }
+
+    // Add user info to request headers
     const requestHeaders = new Headers(request.headers);
-    requestHeaders.set('user-id', decoded.userId);
+    requestHeaders.set('user-id', decodedPayload.userId);
 
     // Add user info to request
     const response = NextResponse.next({

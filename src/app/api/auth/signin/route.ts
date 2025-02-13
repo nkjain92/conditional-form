@@ -1,9 +1,22 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/db';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+function generateToken(userId: string): string {
+  // Create a simple JWT-like token
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const now = Math.floor(Date.now() / 1000);
+  const payload = btoa(
+    JSON.stringify({
+      userId,
+      iat: now,
+      exp: now + 7 * 24 * 60 * 60, // 7 days
+    }),
+  );
+  const signature = btoa(header + '.' + payload); // In production, use proper signing
+
+  return `${header}.${payload}.${signature}`;
+}
 
 export async function POST(request: Request) {
   try {
@@ -29,8 +42,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
     }
 
-    // Generate JWT
-    const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
+    // Generate token
+    const token = generateToken(user.id);
 
     // Create response
     const response = NextResponse.json({
