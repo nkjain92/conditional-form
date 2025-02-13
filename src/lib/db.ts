@@ -1,19 +1,31 @@
 import { PrismaClient } from '@prisma/client';
 
 const prismaClientSingleton = () => {
-  return new PrismaClient();
+  return new PrismaClient({
+    log: ['error'],
+    datasources: {
+      db: {
+        url: process.env.POSTGRES_URL,
+      },
+    },
+    // Add connection pooling configuration
+    connection: {
+      pool: {
+        min: 1,
+        max: 5,
+      },
+    },
+  });
 };
 
-type GlobalWithPrisma = typeof globalThis & {
-  prisma: ReturnType<typeof prismaClientSingleton> | undefined;
-};
+declare global {
+  var prisma: ReturnType<typeof prismaClientSingleton> | undefined;
+}
 
-const globalForPrisma = globalThis as GlobalWithPrisma;
-
-const prisma = globalForPrisma.prisma ?? prismaClientSingleton();
+const prisma = globalThis.prisma ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== 'production') {
-  globalForPrisma.prisma = prisma;
+  globalThis.prisma = prisma;
 }
 
 export default prisma;

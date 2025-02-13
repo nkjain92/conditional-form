@@ -11,13 +11,22 @@ interface Theme {
   };
 }
 
+// Default themes for optimistic UI
+const defaultThemes: Theme[] = [
+  { id: '1', name: 'Italian', maxVotes: 100, _count: { votes: 0 } },
+  { id: '2', name: 'Mexican', maxVotes: 100, _count: { votes: 0 } },
+  { id: '3', name: 'Chinese', maxVotes: 100, _count: { votes: 0 } },
+  { id: '4', name: 'Indian', maxVotes: 100, _count: { votes: 0 } },
+  { id: '5', name: 'Mediterranean', maxVotes: 100, _count: { votes: 0 } },
+];
+
 export default function Home() {
-  const [themes, setThemes] = useState<Theme[]>([]);
+  const [themes, setThemes] = useState<Theme[]>(defaultThemes); // Start with default themes
   const [voterName, setVoterName] = useState('');
   const [selectedTheme, setSelectedTheme] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [hasVoted, setHasVoted] = useState(false);
 
   useEffect(() => {
@@ -27,16 +36,12 @@ export default function Home() {
   const fetchThemes = async () => {
     try {
       setIsLoading(true);
-      console.log('Fetching themes...');
       const response = await fetch('/api/themes');
       const data = await response.json();
-      console.log('Received data:', data);
 
       if (Array.isArray(data)) {
-        console.log('Setting themes:', data);
         setThemes(data);
       } else {
-        console.log('Invalid data format:', data);
         setError('Invalid data format received');
       }
     } catch (error) {
@@ -58,6 +63,10 @@ export default function Home() {
     }
 
     try {
+      // Optimistically update UI
+      setSuccess('Submitting your vote...');
+      setHasVoted(true);
+
       const response = await fetch('/api/votes', {
         method: 'POST',
         headers: {
@@ -77,11 +86,11 @@ export default function Home() {
       setSuccess('Vote submitted successfully!');
       setVoterName('');
       setSelectedTheme('');
-      setHasVoted(true);
       fetchThemes();
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
+        setHasVoted(false); // Revert optimistic update
       } else {
         setError('Failed to submit vote');
       }
