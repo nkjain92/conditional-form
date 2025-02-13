@@ -8,6 +8,7 @@ const publicPaths = [
   '/api/auth/signup',
   '/api/auth/signout',
   '/api/themes',
+  '/api/votes',
 ];
 
 export function middleware(request: NextRequest) {
@@ -57,7 +58,7 @@ export function middleware(request: NextRequest) {
   }
 }
 
-// Configure paths that should be protected
+// Configure paths that should be protected - only form creation/management needs auth
 export const config = {
-  matcher: ['/api/forms/:path*', '/api/votes/:path*', '/dashboard/:path*'],
+  matcher: ['/api/forms/:path*', '/dashboard/:path*'],
 };
