@@ -68,7 +68,6 @@ export async function GET() {
 
       const createdThemes = await Promise.all(
         seedThemes.map(async theme => {
-          const sanitizedName = sanitizeThemeName(theme.name);
           return prisma.theme.create({
             data: {
               id: generateId('default', theme.name),
