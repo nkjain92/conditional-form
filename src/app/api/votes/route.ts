@@ -44,7 +44,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(vote);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create vote' }, { status: 500 });
   }
 }

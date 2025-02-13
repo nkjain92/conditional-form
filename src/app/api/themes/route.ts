@@ -12,7 +12,7 @@ export async function GET() {
     });
 
     return NextResponse.json(themes);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to fetch themes' }, { status: 500 });
   }
 }
@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(theme);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: 'Failed to create theme' }, { status: 500 });
   }
 }

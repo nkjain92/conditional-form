@@ -33,7 +33,7 @@ export default function Home() {
       } else {
         setError('Invalid data format received');
       }
-    } catch (error) {
+    } catch {
       setError('Failed to fetch themes');
     } finally {
       setIsLoading(false);
