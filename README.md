@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Catering Theme Voting System
 
-## Getting Started
+A simple voting system for catering themes with a maximum cap on votes per theme. Built with Next.js, Prisma, and Vercel Postgres.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- Vote for available catering themes
+- Real-time vote count display
+- Maximum vote cap per theme
+- First-come-first-serve voting system
+- One vote per person
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Prerequisites
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 18+ installed
+- Vercel account (for deployment)
+- Vercel Postgres database
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup
 
-## Learn More
+1. Clone the repository
+2. Install dependencies:
 
-To learn more about Next.js, take a look at the following resources:
+   ```bash
+   npm install
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+3. Set up your environment variables:
+   Create a `.env` file in the root directory with:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+   ```
+   POSTGRES_URL="your-vercel-postgres-url"
+   ```
 
-## Deploy on Vercel
+4. Push the database schema:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+   ```bash
+   npx prisma db push
+   ```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+5. Seed the database with initial themes:
+
+   ```bash
+   npx ts-node src/scripts/seed.ts
+   ```
+
+6. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+## Deployment
+
+1. Install Vercel CLI:
+
+   ```bash
+   npm i -g vercel
+   ```
+
+2. Deploy to Vercel:
+
+   ```bash
+   vercel
+   ```
+
+3. Follow the prompts to deploy your application
+
+## Usage
+
+1. Visit the application URL
+2. Enter your name
+3. Select an available theme
+4. Submit your vote
+5. The system will automatically update to show current vote counts
+
+## Technical Details
+
+- Built with Next.js 14 and TypeScript
+- Uses Prisma as ORM
+- Vercel Postgres for database
+- Tailwind CSS for styling
+- Real-time vote tracking
+- Automatic theme removal when max votes reached
