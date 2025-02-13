@@ -17,6 +17,7 @@ export async function GET() {
       return NextResponse.json(themesCache);
     }
 
+    console.log('Fetching themes from database...');
     const themes = await prisma.theme.findMany({
       include: {
         _count: {
@@ -32,8 +33,10 @@ export async function GET() {
         name: 'asc',
       },
     });
+    console.log('Themes fetched:', themes);
 
     if (!themes || themes.length === 0) {
+      console.log('No themes found, creating system user...');
       // Get or create system user
       const systemUser = await prisma.user.upsert({
         where: { email: 'system@example.com' },
@@ -44,6 +47,7 @@ export async function GET() {
           password: await bcrypt.hash('system-password-not-used', 10),
         },
       });
+      console.log('System user created/found:', systemUser.id);
 
       // Get or create default form
       const defaultForm = await prisma.form.upsert({
@@ -114,10 +118,9 @@ export async function GET() {
 
     return NextResponse.json(themes);
   } catch (error) {
-    console.error('Error fetching themes:', error);
-    // If cache exists, return it as fallback
-    if (themesCache) {
-      return NextResponse.json(themesCache);
+    console.error('Detailed error in themes GET:', error);
+    if (error instanceof Error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
     return NextResponse.json({ error: 'Failed to fetch themes' }, { status: 500 });
   }
