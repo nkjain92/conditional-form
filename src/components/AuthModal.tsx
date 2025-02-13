@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth';
+import { useRouter } from 'next/navigation';
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -14,6 +15,7 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const { signIn, signUp } = useAuth();
+  const router = useRouter();
 
   if (!isOpen) return null;
 
@@ -27,6 +29,14 @@ export default function AuthModal({ isOpen, onClose }: AuthModalProps) {
       } else {
         await signUp(email, password);
       }
+
+      // Check for redirect path
+      const redirectPath = sessionStorage.getItem('redirectAfterAuth');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirectAfterAuth');
+        router.push(redirectPath);
+      }
+
       onClose();
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Authentication failed');

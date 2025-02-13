@@ -45,9 +45,10 @@ A simple voting system for catering themes with a maximum cap on votes per theme
    ```
 
 6. Run the development server:
-   ```bash
-   npm run dev
-   ```
+
+```bash
+npm run dev
+```
 
 ## Deployment
 
