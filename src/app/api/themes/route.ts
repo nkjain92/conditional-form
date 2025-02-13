@@ -68,10 +68,11 @@ export async function GET() {
 
       const createdThemes = await Promise.all(
         seedThemes.map(async theme => {
+          const sanitizedName = sanitizeThemeName(theme.name);
           return prisma.theme.create({
             data: {
-              id: generateId('default', theme.name),
-              name: theme.name,
+              id: generateId('default', sanitizedName),
+              name: sanitizedName,
               maxVotes: theme.maxVotes,
               formId: defaultForm.id,
             },
@@ -117,6 +118,7 @@ export async function POST(request: Request) {
     }
 
     const { name, maxVotes, formId } = body as ThemeData;
+    const sanitizedName = sanitizeThemeName(name);
 
     // Check if form exists
     const form = await prisma.form.findUnique({
@@ -130,8 +132,8 @@ export async function POST(request: Request) {
     // Create theme with sanitized name
     const theme = await prisma.theme.create({
       data: {
-        id: generateId('theme', name),
-        name,
+        id: generateId('theme', sanitizedName),
+        name: sanitizedName,
         maxVotes,
         formId,
       },
