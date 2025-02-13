@@ -8,24 +8,19 @@ const prismaClientSingleton = () => {
         url: process.env.POSTGRES_URL,
       },
     },
-    // Add connection pooling configuration
-    connection: {
-      pool: {
-        min: 1,
-        max: 5,
-      },
-    },
   });
 };
 
-declare global {
-  let prisma: ReturnType<typeof prismaClientSingleton> | undefined;
-}
+type GlobalWithPrisma = typeof globalThis & {
+  prisma?: ReturnType<typeof prismaClientSingleton>;
+};
 
-const prisma = globalThis.prisma ?? prismaClientSingleton();
+declare const global: GlobalWithPrisma;
+
+const prisma = global.prisma ?? prismaClientSingleton();
 
 if (process.env.NODE_ENV !== 'production') {
-  globalThis.prisma = prisma;
+  global.prisma = prisma;
 }
 
 export default prisma;
