@@ -69,10 +69,26 @@ export async function GET() {
       const createdThemes = await Promise.all(
         seedThemes.map(async theme => {
           const sanitizedName = sanitizeThemeName(theme.name);
+          const themeId = generateId('default', sanitizedName);
+
+          // Check if theme already exists
+          const existingTheme = await prisma.theme.findUnique({
+            where: { id: themeId },
+            include: {
+              _count: {
+                select: { votes: true },
+              },
+            },
+          });
+
+          if (existingTheme) {
+            return existingTheme;
+          }
+
           return prisma.theme.create({
             data: {
-              id: generateId('default', sanitizedName),
-              name: sanitizedName,
+              id: themeId,
+              name: theme.name, // Keep original name for display
               maxVotes: theme.maxVotes,
               formId: theme.formId,
             },
@@ -118,22 +134,22 @@ export async function POST(request: Request) {
     }
 
     const { name, maxVotes, formId } = body as Required<ThemeData>;
-    const sanitizedName = sanitizeThemeName(name);
+    const themeId = generateId('theme', name);
 
-    // Check if form exists
-    const form = await prisma.form.findUnique({
-      where: { id: formId },
+    // Check if theme already exists
+    const existingTheme = await prisma.theme.findUnique({
+      where: { id: themeId },
     });
 
-    if (!form) {
-      return NextResponse.json({ error: 'Form not found' }, { status: 404 });
+    if (existingTheme) {
+      return NextResponse.json({ error: 'Theme already exists' }, { status: 400 });
     }
 
-    // Create theme with sanitized name
+    // Create theme
     const theme = await prisma.theme.create({
       data: {
-        id: generateId('theme', sanitizedName),
-        name: sanitizedName,
+        id: themeId,
+        name, // Keep original name for display
         maxVotes,
         formId,
       },

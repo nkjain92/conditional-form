@@ -37,5 +37,6 @@ export function sanitizeThemeName(name: string): string {
 
 // Helper function to generate unique ID
 export function generateId(prefix: string, name: string): string {
-  return `${prefix}-${sanitizeThemeName(name)}-${Date.now()}`;
+  const sanitizedName = sanitizeThemeName(name);
+  return `${prefix}-${sanitizedName}`;
 }
